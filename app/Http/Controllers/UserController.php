@@ -10,7 +10,9 @@ use Intervention\Image\Laravel\Facades\Image;
 
 class UserController extends Controller
 {
-    // Display all users
+    /**
+     * Display all users.
+     */
     public function index()
     {
         $users = User::all();
@@ -18,13 +20,17 @@ class UserController extends Controller
         return view('users.index', compact('users'));
     }
 
-    // Show Create User form
+    /**
+     * Show the create user form.
+     */
     public function create()
     {
         return view('users.create');
     }
 
-    // Store new user
+    /**
+     * Store a new user.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -44,13 +50,25 @@ class UserController extends Controller
             ->with('success', 'User added successfully!');
     }
 
-    // Show Edit User form
+    /**
+     * Display a specific user.
+     */
+    public function show(User $user)
+    {
+        return view('users.show', compact('user'));
+    }
+
+    /**
+     * Show the edit user form.
+     */
     public function edit(User $user)
     {
         return view('users.edit', compact('user'));
     }
 
-    // Update user information and avatar
+    /**
+     * Update user information and avatar.
+     */
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
@@ -60,16 +78,16 @@ class UserController extends Controller
             'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        // Update basic information
+        // Update basic information.
         $user->username = $validated['username'];
         $user->full_name = $validated['full_name'];
 
-        // Update password only when provided
-        if ($request->filled('password')) {
+        // Update password only when provided.
+        if (!empty($validated['password'])) {
             $user->password = $validated['password'];
         }
 
-        // Process uploaded avatar
+        // Process uploaded avatar.
         if ($request->hasFile('avatar')) {
 
             $image = Image::read($request->file('avatar'))
@@ -78,18 +96,18 @@ class UserController extends Controller
 
             $avatarPath = 'avatars/' . Str::uuid() . '.jpg';
 
-            // Store prepared image
+            // Store processed image.
             Storage::disk('public')->put(
                 $avatarPath,
                 (string) $image
             );
 
-            // Delete previous avatar
+            // Delete previous avatar.
             if ($user->avatar) {
                 Storage::disk('public')->delete($user->avatar);
             }
 
-            // Save image path
+            // Save new avatar path.
             $user->avatar = $avatarPath;
         }
 
@@ -98,5 +116,30 @@ class UserController extends Controller
         return redirect()
             ->route('users.index')
             ->with('success', 'User updated successfully!');
+    }
+
+    /**
+     * Delete a user.
+     */
+    public function destroy(User $user)
+    {
+        // Prevent deleting the currently authenticated account.
+        if (auth()->id() === $user->id) {
+            return redirect()
+                ->route('users.index')
+                ->with('error', 'You cannot delete your own account.');
+        }
+
+        // Delete avatar from public storage.
+        if ($user->avatar) {
+            Storage::disk('public')->delete($user->avatar);
+        }
+
+        // Delete user record.
+        $user->delete();
+
+        return redirect()
+            ->route('users.index')
+            ->with('success', 'User deleted successfully!');
     }
 }

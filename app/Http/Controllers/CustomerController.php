@@ -15,13 +15,13 @@ class CustomerController extends Controller
         return view('customers.index', compact('customers'));
     }
 
-    // Show Create Customer form
+    // Show the create customer form
     public function create()
     {
         return view('customers.create');
     }
 
-    // Save new customer
+    // Store a new customer
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -39,13 +39,19 @@ class CustomerController extends Controller
             ->with('success', 'Customer added successfully!');
     }
 
-    // Show Edit Customer form
+    // Display a specific customer
+    public function show(Customer $customer)
+    {
+        return view('customers.show', compact('customer'));
+    }
+
+    // Show the edit customer form
     public function edit(Customer $customer)
     {
         return view('customers.edit', compact('customer'));
     }
 
-    // Update existing customer
+    // Update an existing customer
     public function update(Request $request, Customer $customer)
     {
         $validated = $request->validate([
@@ -61,5 +67,15 @@ class CustomerController extends Controller
         return redirect()
             ->route('customers.index')
             ->with('success', 'Customer updated successfully!');
+    }
+
+    // Delete a customer
+    public function destroy(Customer $customer)
+    {
+        $customer->delete();
+
+        return redirect()
+            ->route('customers.index')
+            ->with('success', 'Customer deleted successfully!');
     }
 }

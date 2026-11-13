@@ -1,44 +1,51 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PageController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
+use App\Models\Customer;
+use App\Models\User;
 
-Route::get('/', [PageController::class, 'home'])
-    ->name('home');
+// Welcome Page
+Route::get('/', function () {
+    return view('welcome');
+});
 
-Route::get('/about', [PageController::class, 'about'])
-    ->name('about');
+// Dashboard
+Route::get('/dashboard', function () {
 
-// Customer routes
-Route::get('/customers', [CustomerController::class, 'index'])
-    ->name('customers.index');
+    $customersCount = Customer::count();
+    $usersCount = User::count();
 
-Route::get('/customers/create', [CustomerController::class, 'create'])
-    ->name('customers.create');
+    return view('dashboard', compact(
+        'customersCount',
+        'usersCount'
+    ));
 
-Route::post('/customers', [CustomerController::class, 'store'])
-    ->name('customers.store');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/customers/{customer}/edit', [CustomerController::class, 'edit'])
-    ->name('customers.edit');
+// Customer Resource Routes
+Route::resource('customers', CustomerController::class)
+    ->middleware('auth');
 
-Route::put('/customers/{customer}', [CustomerController::class, 'update'])
-    ->name('customers.update');
+// User Resource Routes
+Route::resource('users', UserController::class)
+    ->middleware('auth');
 
-// User routes
-Route::get('/users', [UserController::class, 'index'])
-    ->name('users.index');
+// Protected Profile Routes
+Route::middleware(['auth'])->group(function () {
 
-Route::get('/users/create', [UserController::class, 'create'])
-    ->name('users.create');
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
 
-Route::post('/users', [UserController::class, 'store'])
-    ->name('users.store');
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
 
-Route::get('/users/{user}/edit', [UserController::class, 'edit'])
-    ->name('users.edit');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
 
-Route::put('/users/{user}', [UserController::class, 'update'])
-    ->name('users.update');
+});
+
+// Authentication Routes
+require __DIR__.'/auth.php';
