@@ -9,7 +9,7 @@ use App\Models\User;
 
 // Welcome Page
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 // Dashboard
